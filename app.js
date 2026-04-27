@@ -244,8 +244,8 @@ async function dbUpdateClient(id, data) {
 }
 
 async function dbDeleteClient(id) {
-  await _supabase.from('invoices').delete().eq('client_id', id).eq('user_id', App.currentUser?.id);
-  const { error } = await _supabase.from('clients').delete().eq('id', id).eq('user_id', App.currentUser?.id);
+  await _supabase.from('invoices').delete().eq('client_id', id).eq('owner_id', App.currentUser?.id);
+  const { error } = await _supabase.from('clients').delete().eq('id', id).eq('owner_id', App.currentUser?.id);
   if (error) throw error;
 }
 
@@ -279,13 +279,13 @@ async function dbUpdateInvoice(id, data) {
   if (data.paidAt !== undefined) updatePayload.paid_at = data.paidAt;
 
   const { data: row, error } = await _supabase.from('invoices').update(updatePayload)
-    .eq('id', id).eq('user_id', App.currentUser?.id).select().single();
+    .eq('id', id).eq('owner_id', App.currentUser?.id).select().single();
   if (error) throw error;
   return normalizeInvoice(row);
 }
 
 async function dbDeleteInvoice(id) {
-  const { error } = await _supabase.from('invoices').delete().eq('id', id).eq('user_id', App.currentUser?.id);
+  const { error } = await _supabase.from('invoices').delete().eq('id', id).eq('owner_id', App.currentUser?.id);
   if (error) throw error;
 }
 
@@ -317,7 +317,7 @@ async function dbMarkAllNotifsRead() {
   if (!userId) return;
   const { error } = await _supabase.from('notifications')
     .update({ read: true })
-    .eq('user_id', userId)
+    .eq('owner_id', userId)
     .eq('read', false);
   if (error) console.error('[PayBack] mark notifs read error:', error);
 }
@@ -2256,7 +2256,7 @@ async function fetchNotifications() {
   const { data, error } = await _supabase
     .from('notifications')
     .select('*')
-    .eq('user_id', userId)
+    .eq('owner_id', userId)
     .order('created_at', { ascending: false })
     .limit(20);
 
@@ -2471,7 +2471,7 @@ function initRealtimeNotifications() {
         event:  'INSERT',
         schema: 'public',
         table:  'notifications',
-        filter: `user_id=eq.${userId}`
+        filter: `owner_id=eq.${userId}`
       },
       (payload) => {
         const newRow  = payload.new;
@@ -2557,8 +2557,8 @@ function _escHtml(str) {
       -- SELECT / INSERT / UPDATE own rows
       CREATE POLICY "users own notifications"
         ON notifications FOR ALL
-        USING (auth.uid() = user_id)
-        WITH CHECK (auth.uid() = user_id);
+        USING (auth.uid() = owner_id)
+        WITH CHECK (auth.uid() = owner_id);
 
    ══════════════════════════════════════════════════════════════════
    HTML SNIPPETS — paste into your HTML file
