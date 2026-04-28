@@ -1861,3 +1861,19 @@ async function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+async function loginWithGoogle() {
+  try {
+    const { data, error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+
+    if (error) throw error;
+  } catch (err) {
+    console.error('Google login error:', err);
+    showToast('Google login xatolik', 'error');
+  }
+}
